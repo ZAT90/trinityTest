@@ -1,5 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
+import data from '../../assets/data.json'
 
 export const initialState = { loading: false, hasErrors: false, profiles: [] }
 
@@ -19,19 +20,36 @@ const profilesSlice = createSlice({
             state.loading = false
             state.hasErrors = true
         },
+        getSearchedProfiles: (state, { payload }) => {
+            console.log('payload to search: ', payload);
+
+            state.profiles = state.profiles.filter((profile) =>
+                profile.firstName.toLowerCase().includes(payload.toLowerCase()) ||
+                profile.lastName.toLowerCase().includes(payload.toLowerCase()))
+
+            // state.profiles.push(payload);
+        },
         addNewProfile: (state, { payload }) => {
             state.profiles.push(payload);
         },
-        deleteProfile: (state, { payload }) => {
-            //console.log('delete payload: ', payload);
-            state.profiles = state.profiles.filter((element) => element.id !== payload.id);
-            // state.profiles.push(payload);
-        }
+        editProfileAndSave: (state, { payload }) => {
+
+            state.profiles = state.profiles.map(profile => {
+                if (profile.id == payload.id) {
+                    console.log('payload inside if: ', profile)
+                    return { ...profile, firstName: payload.firstName, lastName: payload.lastName, phone: payload.phone, email: payload.email }
+                }
+                return profile;
+            });
+
+
+        },
+
     }
 })
 
 // 5 actions generated
-export const { getProfiles, getProfilesSuccess, getProfilesFailure, addNewProfile, deleteProfile } = profilesSlice.actions
+export const { getProfiles, getProfilesSuccess, getProfilesFailure, editProfileAndSave, getSearchedProfiles, addNewProfile } = profilesSlice.actions
 
 // selector
 export const profilesSelector = state => state.profiles
@@ -44,22 +62,13 @@ export function fetchProfiles() {
     return async dispatch => {
         dispatch(getProfiles())
         try {
-            const response = await axios.get('https://jsonplaceholder.typicode.com/users');
-            //  console.log('api response: ', response.status);
-            if (response.status == 200) {
-                // console.log('response data: ', response.data);
-                // console.log('response data true: ', response.data.length > 0)
-                if (response.data.length > 0) {
-                    dispatch(getProfilesSuccess(response.data));
-                } else {
-                    dispatch(getProfilesFailure())
-                }
-
-
+            console.log('data json: ', data);
+            if (data.length > 0) {
+                dispatch(getProfilesSuccess(data));
             } else {
                 dispatch(getProfilesFailure())
             }
-            // 
+
 
 
 

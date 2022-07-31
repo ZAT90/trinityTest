@@ -1,37 +1,24 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { View, Text, FlatList, TouchableWithoutFeedback, KeyboardAvoidingView } from 'react-native';
-import { ActivityIndicator, Colors, FAB } from 'react-native-paper';
+import { View, Text, FlatList, TouchableWithoutFeedback, KeyboardAvoidingView, RefreshControl } from 'react-native';
+import { ActivityIndicator, Colors, FAB, Searchbar } from 'react-native-paper';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import styles from '../styles/screenStyles';
-import { fetchProfiles, profilesSelector, deleteProfile } from '../slices/profiles'
+import { fetchProfiles, profilesSelector, editProfileAndSave, getSearchedProfiles } from '../slices/profiles'
 
 
 function HomeScreen({ navigation }) {
     const dispatch = useDispatch();
     const { profiles, loading, hasErrors } = useSelector(profilesSelector);
+    const [refreshing, setRefreshing] = useState(false);
+    const [searchText, setSearchText] = useState('');
 
     const item = {
         "id": 0,
-        "name": "",
-        "username": "",
-        "email": "",
-        "address": {
-            "street": "",
-            "suite": "",
-            "city": "",
-            "zipcode": "",
-            "geo": {
-                "lat": "",
-                "lng": ""
-            }
-        },
-        "phone": "",
-        "website": "",
-        "company": {
-            "name": "",
-            "catchPhrase": "",
-            "bs": ""
-        }
+        "firstName": '',
+        "lastName": '',
+        "email": '',
+        "phone": ''
     };
 
 
@@ -61,25 +48,48 @@ function HomeScreen({ navigation }) {
         />
     );
     const renderProfiles = () => {
+        // if(refreshing) setSearchText('')
         if (loading) return <ActivityIndicator animating={true} color={Colors.red100} />
         if (hasErrors) return <Text>Cannot display profiles...</Text>
-        if (profiles.length == 0) return <Text>No profile available...</Text>
-        return <FlatList
-            data={profiles}
-            ItemSeparatorComponent={renderSeparator}
-            renderItem={({ item }) => (
-                <TouchableWithoutFeedback
-                    onPress={() => navigation.navigate('ViewDetail', { item, isAddingProfile: false, profiles, name: 'View Profile' })}
-                   // onPress={() => dispatch(deleteProfile(item))}
-                >
-                    <View style={styles.listItemView}>
-                        <Text style={styles.listItemText}>{item.username}</Text>
-                        <Text style={styles.listItemText2}>{item.email}</Text>
-                    </View>
-                </TouchableWithoutFeedback>
-            )
-            }
-        />
+        // if (profiles.length == 0) {
+        //     return (<Text>No profile available...</Text>)
+        // }
+        return (
+            <View>
+                {refreshing ? <ActivityIndicator /> : null}
+                <Searchbar
+                    placeholder="Search"
+                    onChangeText={(e) => {
+                        setSearchText(e)
+                        if (e != '') {
+                            dispatch(getSearchedProfiles(e))
+                        } else {
+                            dispatch(fetchProfiles())
+                        }
+
+                    }}
+                    value={searchText}
+                />
+                {profiles.length == 0 ? <View style={{ width: '100%' }}><Text>No profile available...</Text></View> : <View />}
+                <FlatList
+                    data={profiles}
+                    ItemSeparatorComponent={renderSeparator}
+                    refreshControl={
+                        <RefreshControl refreshing={refreshing} onRefresh={() => dispatch(fetchProfiles())} />
+                    }
+                    renderItem={({ item }, index) => (
+                        // console.log('index: ',index)
+                        <TouchableWithoutFeedback
+                            onPress={() => navigation.navigate('ViewDetail', { item, isAddingProfile: false, profiles, name: 'View/Edit Profile' })}
+                        //onPress={() => dispatch(deleteProfile(item, index))}
+                        >
+                            <View style={styles.listItemView}>
+                                <Text style={styles.listItemText}>{item.firstName} {item.lastName}</Text>
+                            </View>
+                        </TouchableWithoutFeedback>
+                    )
+                    }
+                /></View>)
     }
     return (
         <KeyboardAvoidingView

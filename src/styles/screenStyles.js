@@ -39,6 +39,7 @@ const styles = StyleSheet.create({
     right: 20,
     backgroundColor: Colors.blue600
   },
+  detailHeadingText: {marginTop: 20, fontWeight: 'bold'},
   inputStyle: { height: 20, backgroundColor: Colors.white },
   locationText: { color: Colors.blue600, fontWeight: 'bold' },
   currentLocView: { marginTop: 20, height: 50 },
